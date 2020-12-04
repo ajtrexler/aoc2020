@@ -35,3 +35,24 @@ def find_valid_pws(values, pw_policy = "sled rental"):
                 valids.append(pw)
     # return the list of valid pws
     return valids
+
+def encounter_trees(data, right = 3, down = 1):
+    
+    data = [d.replace("\n","") for d in data]
+    c = len(data[0])
+    r = len(data)
+    tmp_data = "".join(data)
+    foo = [int(d=="#") for d in tmp_data]
+    foo = np.reshape(foo,(r,c))
+                  
+    stepsize = right+(c*down)
+    number_steps = (r-1) // down
+    idxs = [stepsize+(j*stepsize) for j in range(number_steps)]
+    #idxs = np.arange(stepsize,stepsize*r,stepsize)
+    #idxs = np.arange(stepsize,r*c,stepsize)
+
+    trees = []
+    for i,pos in enumerate(idxs):
+        if i < len(idxs):
+            trees.append(foo[i*down+down,(pos % (right*c)) % c])
+    return(sum(trees))
