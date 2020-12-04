@@ -7,6 +7,7 @@ Functions for AOC 2020.
 """
 import itertools
 import numpy as np
+import re
 
 def fix_expense_report(values, target = 2020, mode = 2):
     for c in itertools.combinations(values,mode):
@@ -56,3 +57,76 @@ def encounter_trees(data, right = 3, down = 1):
         if i < len(idxs):
             trees.append(foo[i*down+down,(pos % (right*c)) % c])
     return(sum(trees))
+    
+def hgt_helper(x):
+    if "cm" in x:
+        return 150 <= int(x.replace("cm","")) <= 193
+    elif "in" in x:
+        return 59 <= int(x.replace("in","")) <= 76
+    else:
+        return False
+    
+def check_passport_values(p):
+    #p.pop("",None) # remove any empty keys, debris from file load?  
+    # rules for each field  
+    field_rules = {"byr":"len({x})==4 and int({x})>=1920 and int({x}) <= 2002",
+               "iyr":"len({x})==4 and int({x})>=2010 and int({x}) <= 2020",
+               "eyr":"len({x})==4 and int({x})>=2020 and int({x}) <= 2030",
+               "hcl":"True if re.search(\"#[0-9a-f]{6}\",{x}) else False",
+               "ecl":"{x} in [\"amb\",\"blu\", \"brn\", \"gry\", \"grn\", \"hzl\", \"oth\"]",
+               "pid":"True if re.search(\"[0-9]{9}\",{x}) else False",
+               "cid":"True"
+               }
+    foo = []
+    for f in p:
+        v = None
+        if f == "hgt":
+            v = hgt_helper(p[f])
+        elif f == "byr":
+            v = len(p[f])==4 and 1920 <= int(p[f]) <= 2002
+        elif f == "iyr":
+            v = len(p[f])==4 and 2010 <= int(p[f]) <= 2020
+        elif f == "eyr":
+            v = len(p[f])==4 and 2020 <= int(p[f]) <= 2030
+        elif f == "hcl":
+            v = True if re.search("^#[0-9a-f]{6}$",p[f]) else False
+        elif f == "ecl":
+            v = p[f] in ["amb","blu", "brn", "gry", "grn", "hzl", "oth"]    
+        elif f == "pid":
+            v = True if re.search("^\d{9}$",p[f]) else False   
+        elif f == "cid":
+            v = True
+        else:
+            print(p)
+            
+        if v == None:
+            print(p)
+        else:
+            foo.append(v)
+
+    return all(foo)
+#    foo = list(map(lambda x,p: eval(field_rules[p[x]]),p))
+#    foo = list(map(lambda x: x,p))
+#    list(map(lambda x,p: (eval(field_rules[x],p)),p,itertools.repeat(p)))
+#    return(all(foo))
+
+def find_valid_passports(data, cid_valid = True):
+    fields = ["byr","iyr","eyr","hgt","hcl","ecl","pid","cid"]
+    if cid_valid == False:
+        fields.remove("cid")
+    
+    passport_list = data.strip().split("\n\n")
+    passport_list = [p.replace("\n"," ") for p in passport_list]
+    passport_dict = [dict(map(lambda x: x.split(":") if len(x.split(":"))>1 else [x.split(":")[0],""], p.split(" "))) for p in passport_list]
+    
+    valid_pps = []    
+    for p in passport_dict:
+        if all([f in p.keys() for f in fields]):
+            if check_passport_values(p) == True:
+                valid_pps.append(p)
+            
+            
+    return len(valid_pps)
+    
+    
+    
