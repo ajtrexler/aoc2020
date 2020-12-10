@@ -8,6 +8,7 @@ Functions for AOC 2020.
 import itertools
 import numpy as np
 import re
+from collections import Counter
 
 def fix_expense_report(values, target = 2020, mode = 2):
     for c in itertools.combinations(values,mode):
@@ -128,5 +129,96 @@ def find_valid_passports(data, cid_valid = True):
             
     return len(valid_pps)
     
+def find_seat_id(x):
+    row_seq = x[0:7]
+    col_seq = x[7:]
+    row_seq = row_seq[::-1] # reverse order for easier
+    col_seq = col_seq[::-1]
+    b = [int(f=="B") for f in row_seq] # convert to binary format
+    br = [int(f=="R") for f in col_seq]
+    row = sum([(2**i)*n for i,n in enumerate(b)])
+    col = sum([(2**i)*n for i,n in enumerate(br)])
     
+    seat_id = row*8+col
+    return seat_id
+
+def how_many_custom_q(data, question_mode = "any"):
     
+    if question_mode == "any":
+        data = [t.replace("\n","") for t in data.split("\n\n")]
+        ansr_qs = []
+        for d in data:
+            ansr_qs.append(len(set(dd for dd in d)))
+        return sum(ansr_qs)
+    elif question_mode == "all":
+        data = data.split("\n\n")
+        group_sum = []
+        for d in data:
+            num_people = len(d.rstrip("\n").split("\n"))
+            d = d.replace("\n","")
+            ansr_qs = Counter(d)
+            group_sum.append(sum([v==num_people for v in ansr_qs.values()]))
+        return sum(group_sum)
+
+def read_boot_code(data):
+    data = [d.replace("\n","") for d in data]
+    acc = 0
+    idx = [0]
+    retval = "corrupt file!"
+    while len(set(idx)) == len(idx):#) and (idx[-1] != len(data)+1):
+        op,arg = data[idx[-1]].split(" ")
+        if op == "acc":
+            acc += int(arg)
+            idx.append(idx[-1]+1)
+        elif op == "jmp":
+            idx.append(idx[-1]+int(arg))
+        elif op == "nop":
+            idx.append(idx[-1]+1)
+        if idx[-1] == len(data):
+            print("woo!")
+            retval = "valid"
+            break
+    return retval,acc
+
+def fix_boot_code(data):
+    data = [d.replace("\n","") for d in data]
+    for i,d in enumerate(data):
+        op,arg = d.replace("\n","").split(" ")
+        drep = None
+        if op == "nop":
+            drep = "jmp " + arg
+        elif op == "jmp":
+            drep = "nop " + arg
+        if drep != None:
+            print(d,drep)
+            tmp = data.copy()
+            tmp.remove(d)
+            tmp.insert(i,drep)
+        else:
+            tmp = data
+        r,acc = read_boot_code(tmp)
+        if r == "valid":
+            return acc
+        
+
+def attack_xmas_data(x, l = 5):
+    invalids = []
+    for i in np.arange(l,len(x)):
+        pset = x[i-l:i]
+        target = x[i]
+        if not any([sum(c)==target for c in itertools.combinations(pset,2)]):
+            invalids.append(target)
+    return invalids
+
+def find_xmas_weakness(x,target):
+    for rnum in np.arange(2,len(x)):
+        # need to do sliding sum
+        if any([sum(x[i-rnum:i]) == target for i in np.arange(rnum,len(x))]):
+            print(rnum)
+            seq = [x[i-rnum:i] for i in np.arange(rnum,len(x))]
+            idx = np.where(np.array([sum(c) for c in seq]) == target)
+            tmp = seq[idx[0][0]]
+            return max(tmp) + min(tmp)
+
+
+        
